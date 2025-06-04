@@ -1,84 +1,99 @@
-from flask import Flask, request, jsonify, render_template_string, redirect, url_for
+from flask import Flask, request, redirect, url_for, render_template_string
 
 app = Flask(__name__)
 notes = []
 
-# Simple HTML templates embedded as strings for demo purposes
-index_html = """
-<!doctype html>
-<title>Notes App</title>
-<h1>Welcome to the Notes App</h1>
-<a href="{{ url_for('show_notes') }}">View Notes</a> | 
-<a href="{{ url_for('add_note_form') }}">Add Note</a>
-"""
+TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notes App</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f4f7f8;
+            padding: 30px;
+            max-width: 800px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .note {
+            background: white;
+            border-left: 6px solid #007bff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .note h3 {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>📝 Notes App</h1>
+    <form action="/add" method="POST">
+        <input type="text" name="title" placeholder="Title" required>
+        <textarea name="content" placeholder="Write your note here..." rows="4" required></textarea>
+        <button type="submit">Add Note</button>
+    </form>
 
-notes_html = """
-<!doctype html>
-<title>All Notes</title>
-<h1>All Notes</h1>
-<ul>
-  {% for note in notes %}
-    <li><strong>{{ note.title }}</strong>: {{ note.content }}</li>
-  {% else %}
-    <li>No notes yet!</li>
-  {% endfor %}
-</ul>
-<a href="{{ url_for('add_note_form') }}">Add a new note</a> | 
-<a href="{{ url_for('index') }}">Home</a>
-"""
-
-add_note_html = """
-<!doctype html>
-<title>Add Note</title>
-<h1>Add a New Note</h1>
-<form method="POST">
-  <label for="title">Title:</label><br>
-  <input type="text" id="title" name="title" required><br><br>
-  <label for="content">Content:</label><br>
-  <textarea id="content" name="content" rows="4" cols="50" required></textarea><br><br>
-  <input type="submit" value="Add Note">
-</form>
-<a href="{{ url_for('show_notes') }}">Back to notes</a> | 
-<a href="{{ url_for('index') }}">Home</a>
+    {% for note in notes %}
+        <div class="note">
+            <h3>{{ note.title }}</h3>
+            <p>{{ note.content }}</p>
+        </div>
+    {% endfor %}
+</body>
+</html>
 """
 
 @app.route("/")
 def index():
-    return render_template_string(index_html)
+    return render_template_string(TEMPLATE, notes=notes)
 
-@app.route("/notes")
-def show_notes():
-    return render_template_string(notes_html, notes=notes)
-
-@app.route("/notes/add", methods=["GET", "POST"])
-def add_note_form():
-    if request.method == "POST":
-        title = request.form.get("title")
-        content = request.form.get("content")
-        note = {
-            "id": len(notes) + 1,
-            "title": title,
-            "content": content
-        }
-        notes.append(note)
-        return redirect(url_for('show_notes'))
-    return render_template_string(add_note_html)
-
-# Optional: keep your existing API endpoints if you want JSON support too
-@app.route("/api/notes", methods=["GET"])
-def get_notes():
-    return jsonify(notes)
-
-@app.route("/api/notes", methods=["POST"])
-def add_note_api():
-    data = request.get_json()
-    note = {
+@app.route("/add", methods=["POST"])
+def add_note():
+    title = request.form.get("title")
+    content = request.form.get("content")
+    notes.append({
         "id": len(notes) + 1,
-        "title": data.get("title"),
-        "content": data.get("content")
-    }
-    notes.append(note)
-    return jsonify(note), 201
+        "title": title,
+        "content": content
+    })
+    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
