@@ -5,7 +5,7 @@ notes = []
 
 @app.route("/")
 def index():
-    return "Welcome to the Notes App!"
+    return "Welcome to the Notes App"
 
 @app.route("/notes", methods=["GET"])
 def get_notes():
